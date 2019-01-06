@@ -36,7 +36,8 @@ class ViewOnlyDecryptClass extends PureComponent<Props, State> {
     const { isValidAddress, currentAddress, resolvedAddress } = this.props;
     const { addressFromBook } = this.state;
     const isValid =
-      isValidAddress(currentAddress.raw) || (resolvedAddress && isValidAddress(resolvedAddress));
+      isValidAddress(currentAddress.raw.toLowerCase()) ||
+      (resolvedAddress && isValidAddress(resolvedAddress));
 
     return (
       <div className="ViewOnly">
@@ -90,7 +91,7 @@ class ViewOnlyDecryptClass extends PureComponent<Props, State> {
 
     if (isValidAddress(addressFromBook)) {
       wallet = addressFromBook;
-    } else if (isValidAddress(currentAddress.raw)) {
+    } else if (isValidAddress(currentAddress.raw.toLowerCase())) {
       wallet = currentAddress.raw;
     } else if (resolvedAddress && isValidAddress(resolvedAddress)) {
       wallet = resolvedAddress;
