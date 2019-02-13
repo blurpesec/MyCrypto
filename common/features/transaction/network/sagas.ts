@@ -26,7 +26,11 @@ import { configMetaTypes, configMetaSelectors, configNodesSelectors } from 'feat
 import { walletTypes, walletSelectors } from 'features/wallet';
 import { scheduleActions, scheduleSelectors, scheduleTypes } from 'features/schedule';
 import { notificationsActions } from 'features/notifications';
-import { transactionFieldsTypes, transactionFieldsActions } from '../fields';
+import {
+  transactionFieldsTypes,
+  transactionFieldsActions,
+  transactionFieldsSelectors
+} from '../fields';
 import { transactionsSelectors } from 'features/transactions';
 import * as transactionTypes from '../types';
 import * as types from './types';
@@ -73,6 +77,7 @@ export function* shouldEstimateGas(): SagaIterator {
       transactionFieldsTypes.TransactionFieldsActions.TO_FIELD_SET,
       transactionFieldsTypes.TransactionFieldsActions.VALUE_FIELD_SET,
       transactionFieldsTypes.TransactionFieldsActions.DATA_FIELD_SET,
+      transactionFieldsTypes.TransactionFieldsActions.GAS_PRICE_FIELD_SET,
       transactionTypes.TransactionActions.ETHER_TO_TOKEN_SWAP,
       transactionTypes.TransactionActions.TOKEN_TO_TOKEN_SWAP,
       transactionTypes.TransactionActions.TOKEN_TO_ETHER_SWAP,
@@ -137,7 +142,8 @@ export function* estimateGas(): SagaIterator {
   while (true) {
     const autoGasLimitEnabled: boolean = yield select(configMetaSelectors.getAutoGasLimitEnabled);
     const isOffline = yield select(configMetaSelectors.getOffline);
-
+    const gasPriceObj = yield select(transactionFieldsSelectors.getGasPrice);
+    const gasPrice = '0x' + gasPriceObj.value;
     if (isOffline || !autoGasLimitEnabled) {
       continue;
     }
@@ -149,8 +155,8 @@ export function* estimateGas(): SagaIterator {
     const walletInst: IWallet = yield select(walletSelectors.getWalletInst);
     try {
       const from: string = yield apply(walletInst, walletInst.getAddressString);
-      const txObj = { ...payload, from };
 
+      const txObj = { ...payload, from, gasPrice };
       let { gasLimit }: { gasLimit: BN } = yield race({
         gasLimit: apply(node, node.estimateGas, [txObj]),
         timeout: call(delay, 10000)
